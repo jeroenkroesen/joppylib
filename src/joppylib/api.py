@@ -58,7 +58,7 @@ class Item:
         fields: Optional[ List[str] ] = None, 
         order_by: Optional[str] = None,
         order_dir: Optional[str] = None
-    ) -> Dict[str, Any] | List[Any]:
+    ) -> Dict[str, Any]:
         """Search using the API
 
         Parameters
@@ -70,8 +70,8 @@ class Item:
         query : str
             The search query. See the Joplin API for query syntax
         fields: List[str]
-            Optional. A list of object fields to include in the results
-            Fields will be checked against the item types allowed fields
+            Optional. A list of object fields to include in the results.
+            Fields will be checked against the item type's allowed fields.
         order_by : str
             Optional. A field to order the results by. If specified, 
             the field will be checked against allowed fields for the 
@@ -98,7 +98,7 @@ class Item:
         ## Fixed params
         params = f'?query={query}'
         # Default assumes we're searching notes. If not, the item type must 
-        ## be added to the parameters
+        #  be added to the parameters
         if self.name != 'note':
             params += f'&type={self.name}'
         params += f'&token={api_key}&limit={settings.pagesize}'
@@ -148,8 +148,41 @@ class Item:
         fields: Optional[ List[str] ] = None, 
         order_by: Optional[str] = None,
         order_dir: Optional[str] = None
-    ) -> List[ Dict[Any,Any] | None ]:
+    ) -> Dict[str,Any]:
         """Get a list of all items
+
+        Parameters
+        ----------
+        api_key : str
+            A valid API key to authenticate to the Joplin Data API
+        settings : Settings
+            A settings object from config.Settings
+        query : str
+            The search query. See the Joplin API for query syntax
+        fields: List[str]
+            Optional. A list of object fields to include in the results
+            Fields will be checked against the item types allowed fields
+        order_by : str
+            Optional. A field to order the results by. If specified, 
+            the field will be checked against allowed fields for the 
+            item type.
+        order_dir : str
+            Optional. "ASC" or "DESC" to specify order direction.
+
+        Returns
+        -------
+        Dict
+            A dictionary with keys:
+            "base_url": the full API call url, without pagination info.
+            "result": the result of the search query.
+
+        Raises
+        ------
+        ValueError
+            If order_by is a field name that is not in self.fields
+            If order_dir is not either "ASC" or "DESC"
+        Exception
+            If the API request returns with another status code than 200.
         """
         # Setup request parameters
         ## Fixed params
@@ -171,6 +204,8 @@ class Item:
         # Url setup
         base_url = f'{settings.base_url}/{self.route}{params}'
         # Perform request, including pagination
+        final_result = {}
+        final_result['base_url'] = base_url
         result = []
         req = 1
         has_more = True
@@ -186,7 +221,8 @@ class Item:
             else:
                 msg = f'API call failed with status code: {resp.status_code}'
                 raise Exception(msg)
-        return result
+        final_result['result'] = result
+        return final_result
 
 
     def get(
@@ -197,6 +233,23 @@ class Item:
         fields: Optional[ List[str] ] = None
     ) -> Dict[str,Any]:
         """Get a note by ID
+
+        Parameters
+        ----------
+        api_key : str
+            A valid API key to authenticate to the Joplin Data API
+        settings : Settings
+            A settings object from config.Settings
+        id : str
+            The ID of the item to get
+        fields: List[str]
+            Optional. A list of object fields to include in the results.
+            Fields will be checked against the item types allowed fields.
+
+        Returns
+        -------
+        Dict
+            The json form of the requests response.
         """
         # Setup request parameters
         ## Default params
@@ -216,17 +269,39 @@ class Item:
         api_key: str, 
         settings: Settings, 
         data: Dict[str, Any] | str
-    ) -> Dict[str, Any] | List[Any]:
+    ) -> Dict[str, Any]:
         """POST a new entity to the api. 
-        WARNING: data validation is left to inherited implementation
+        
+        Parameters
+        ----------
+        api_key : str
+            A valid API key to authenticate to the Joplin Data API
+        settings : Settings
+            A settings object from config.Settings
+        data : Dict[str, Any] | str
+            The data for the object to create. Some objects, like tags, can be 
+            created by passing their title as a string. If a dict is passed 
+            it must contain at least the all the required fields as its keys.
+
+        Returns
+        -------
+        Dict
+            The json form of the requests response.
+
+        Raises
+        ------
+        ValueError
+            If data is a dict and a required field is not found among 
+            its keys.
         """
         # Make sure minimum fields are present in data
-        # TODO: below is not clear if it is for notes or also for other entities.
         ## Notes need a dict with fields as payload. Other entities can often 
         ## be created with just their name in string.
-        for field in self.fields_create_required:
-            if not field in data.keys():
-                return {'error': f'Required field {field} was not found in data.'}
+        if isinstance(data, dict):
+            for field in self.fields_create_required:
+                if field not in data.keys():
+                    msg = f'Required field {field} was not found in data.'
+                    raise ValueError(msg)
         # Setup request parameters
         params = f'?token={api_key}'
         # Setup url
@@ -239,6 +314,20 @@ class Item:
 
 class Note(Item):
     """Interact with notes in Joplin via the webclipper API
+
+    Attributes
+    ----------
+    name : str
+        Default: "note".
+        This object deals with notes. 
+    route : str
+        Default: "notes".
+        The API route to interact with notes.
+    fields_create_required : List[str]
+        The fields that are required by the API for a successfull POST request
+    fields: List[str]
+        A list of fields that the entity may have according to the Joplin 
+        documentation.
     """
     name: str = 'note'
     route: str = 'notes'
@@ -284,6 +373,20 @@ class Note(Item):
 
 class Tag(Item):
     """Interact with tags in Joplin via the webclipper API
+
+    Attributes
+    ----------
+    name : str
+        Default: "tag".
+        This object deals with tags.
+    route : str
+        Default: "tags".
+        The API route to interact with tags
+    fields_create_required : List[str]
+        The fields that are required by the API for a successfull POST request
+    fields: List[str]
+        A list of fields that the entity may have according to the Joplin 
+        documentation.
     """
     name: str = 'tag'
     route: str = 'tags'
@@ -309,8 +412,25 @@ class Tag(Item):
         settings: Settings, 
         tag_id: str, 
         note_id: str
-    ) -> Any:
-        """Add this tag to a note"""
+    ) -> Dict[str, Any]:
+        """Add this tag to a note
+
+        Parameters
+        ----------
+        api_key : str
+            A valid API key to authenticate to the Joplin Data API
+        settings : Settings
+            A settings object from config.Settings
+        tag_id : str
+            The ID of the tag to add to the note
+        note_id : str
+            The ID of the note to add this tag to.
+
+        Returns
+        -------
+        Dict[str, Any]
+            The requests response in json dict form.
+        """
         # Setup request parameters
         params = f'?token={api_key}'
         # Setup URL
@@ -325,6 +445,20 @@ class Tag(Item):
 
 class Folder(Item):
     """Interact with folders (notebooks) in Joplin via the webclipper API
+
+    Attributes
+    ----------
+    name : str
+        Default: "folder".
+        This object deals with folders. 
+    route : str
+        Default: "folders".
+        The API route to interact with folders
+    fields_create_required : List[str]
+        The fields that are required by the API for a successfull POST request
+    fields: List[str]
+        A list of fields that the entity may have according to the Joplin 
+        documentation.
     """
     name: str = 'folder'
     route: str = 'folders'
@@ -351,6 +485,21 @@ class Folder(Item):
 
 class Resource(Item):
     """Interact with resources in Joplin via the webclipper API
+
+    Attributes
+    ----------
+    name : str
+        Default: "resource".
+        This object deals with resources. 
+    route : str
+        Default: "resources".
+        The API route to interact with resources
+    fields_create_required : List[str]
+        The fields that are required by the API for a successfull POST request
+    fields: List[str]
+        A list of fields that the entity may have according to the Joplin 
+        documentation.
+
     """
     name: str = 'resource'
     route: str = 'resources'
@@ -379,11 +528,26 @@ class Resource(Item):
         'ocr_status',
         'ocr_error'
     ]
+    # TODO: Override POST function to deal with resource specifics
 
 
 
 class Revision(Item):
     """Interact with Revisions in Joplin via the webclipper API
+
+    Attributes
+    ----------
+    name : str
+        Default: "revision".
+        This object deals with revisions. 
+    route : str
+        Default: "revisions".
+        The API route to interact with revisions.
+    fields_create_required : List[str]
+        The fields that are required by the API for a successfull POST request
+    fields: List[str]
+        A list of fields that the entity may have according to the Joplin 
+        documentation.
     """
     name: str = 'revision'
     route: str = 'revisions'
@@ -407,6 +571,20 @@ class Revision(Item):
 
 class Event(Item):
     """Interact with Events in Joplin via the webclipper API
+
+    Attributes
+    ----------
+    name : str
+        Default: "event".
+        This object deals with events. 
+    route : str
+        Default: "events".
+        The API route to interact with events
+    fields_create_required : List[str]
+        The fields that are required by the API for a successfull POST request
+    fields: List[str]
+        A list of fields that the entity may have according to the Joplin 
+        documentation.
     """
     name: str = 'event'
     route: str = 'events'

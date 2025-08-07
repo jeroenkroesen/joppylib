@@ -1,7 +1,7 @@
 # JopPyLib
 Python abstraction over the Joplin data api  
   
-==WARNING==
+==WARNING==  
 JopPyLib is under heavy development. I've only just started. I will update this readme when a first usable version is released.
 
 JopPyLib is part of the [Artumis project](https://jeroenkroesen.github.io/artumis_site/). It is meant to be a thin layer to enable programmatic manipulation of Joplin notes via a higher level interface than the data API.  
