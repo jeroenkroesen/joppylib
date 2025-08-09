@@ -14,14 +14,13 @@ An [example Jupyter notebook interface](https://github.com/jeroenkroesen/joppyli
 ## Status
 Current release: joppylib-0.1.0a2-py3-none-any
 Very alpha testing release.
+***  
   
   
-***
-
 ## Roadmap
-- [ ] Clean up and document old personal codebase
+- [x] Clean up and document old personal codebase
 - [ ] Complete api layer (`api.py`)
-    - [ ] Generate packages on github to allow pip install when testing.
+    - [x] Generate packages on github to allow pip install when testing.
     - [ ] Override POST function for each entity
     - [ ] Test API functionality
     - [ ] Demonstrate low-level interface in [notebook](https://github.com/jeroenkroesen/joppylib-notebook)
