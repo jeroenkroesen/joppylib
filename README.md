@@ -9,6 +9,11 @@ JopPyLib is part of the [Artumis project](https://jeroenkroesen.github.io/artumi
 JopPyLib is highly opinionated because it is designed to enable a higher level library call [JopBrainLib](https://github.com/jeroenkroesen/jopbrainlib) that enables second brain functionality in Joplin.  
   
 An [example Jupyter notebook interface](https://github.com/jeroenkroesen/joppylib-notebook) is available for interacting with JopPyLib.  
+***  
+  
+## Status
+Current release: joppylib-0.1.0a1-py3-none-any
+Very alpha testing release.
   
   
 ***
@@ -21,4 +26,4 @@ An [example Jupyter notebook interface](https://github.com/jeroenkroesen/joppyli
     - [ ] Test API functionality
     - [ ] Demonstrate low-level interface in [notebook](https://github.com/jeroenkroesen/joppylib-notebook)
 - [ ] Design higher level interface
-- [ ] Implement higher level interface
+- [ ] Implement higher level interface  
