@@ -56,7 +56,8 @@ class Item:
         query: str,
         fields: Optional[ List[str] ] = None, 
         order_by: Optional[str] = None,
-        order_dir: Optional[str] = None
+        order_dir: Optional[str] = None,
+        debug: Optional[bool] = False
     ) -> Dict[str, Any]:
         """Search using the API
 
@@ -68,30 +69,38 @@ class Item:
             A settings object from config.Settings
         query : str
             The search query. See the Joplin API for query syntax
-        fields: List[str]
-            Optional. A list of object fields to include in the results.
+        fields: List[str] (optional)
+            A list of object fields to include in the results.
             Fields will be checked against the item type's allowed fields.
-        order_by : str
-            Optional. A field to order the results by. If specified, 
+        order_by : str (optional)
+            A field to order the results by. If specified, 
             the field will be checked against allowed fields for the 
             item type.
-        order_dir : str
-            Optional. "ASC" or "DESC" to specify order direction.
+        order_dir : str (optional)
+            "ASC" or "DESC" to specify order direction.
+        debug : bool (optional, default: False)
+            If True, include all requests responses in the response.
 
         Returns
         -------
         Dict
-            A dictionary with keys:
-            "base_url": the full API call url, without pagination info.
-            "result": the result of the search query.
+            The result of the search query. With the following keys:
+            success : bool
+                True if all requests had status 200
+            error : str (optional)
+                If success is False, this will contain an 
+                error description.
+            data : list (optional)
+                Data returned from the api if success is True
+            responses : list (optional)
+                Requests response objects for each API call.
+                Only added if debug is True.
 
         Raises
         ------
         ValueError
             If order_by is a field name that is not in self.fields
             If order_dir is not either "ASC" or "DESC"
-        Exception
-            If the API request returns with another status code than 200.
         """
         # Setup params
         ## Fixed params
@@ -116,27 +125,33 @@ class Item:
                 msg = f'{order_dir} is not valid. Use ASC or DESC'
                 raise ValueError(msg)
             params += f'&order_dir={order_dir}'
-        # Url setup
+        # Base url: url without pagination
         base_url = f'{settings.base_url}/{settings.search_route}{params}'
-        # Perform request, including pagination
-        final_result = {}
-        final_result['base_url'] = base_url
-        result = []
-        req = 1
-        has_more = True
-        url = f'{base_url}&page={req}'
-        while has_more:
-            resp = requests.get(url)
-            if resp.status_code == 200:
-                data = resp.json()
-                result.extend(data['items'])
-                has_more = data['has_more']
-                req += 1
-                url = f'{base_url}&page={req}'
+        # Setup datastructure for return to caller
+        final_result = {} # dict to return to caller
+        final_result['success'] = True # Assume success until encounter problem
+        result_data = [] # Concat data here
+        result_responses = [] # Store requests responses here for debug
+        req_nr = 1 # Request nr
+        has_more = True # Make sure request is performed at least once
+        url = f'{base_url}&page={req_nr}' # Add pagination to url
+        while has_more: # Loop until pagination completes
+            result_responses[req_nr] = requests.get(url) # Perform request
+            if result_responses[req_nr].status_code == 200: # Success: get data
+                resp_data = result_responses[req_nr].json() # Extract data
+                result_data.extend(resp_data['items']) # Add to total data to return
+                has_more = resp_data['has_more'] # Check if more data exists
+                req_nr += 1 # Increase request counter
+                url = f'{base_url}&page={req_nr}' # Update URL for next page
             else:
-                msg = f'API call failed with status code: {resp.status_code}'
-                raise Exception(msg)
-        final_result['result'] = result
+                final_result['success'] = False
+                msg = f'Request nr {req_nr} failed with status code: {result_responses[req_nr].status_code}'
+                final_result['error'] = msg
+                break
+        if final_result['success']:
+            final_result['data'] = result_data
+        if debug:
+            final_result['responses'] = result_responses
         return final_result
 
     
@@ -146,7 +161,8 @@ class Item:
         settings: Settings, 
         fields: Optional[ List[str] ] = None, 
         order_by: Optional[str] = None,
-        order_dir: Optional[str] = None
+        order_dir: Optional[str] = None,
+        debug: Optional[bool] = False
     ) -> Dict[str,Any]:
         """Get a list of all items
 
@@ -167,21 +183,29 @@ class Item:
             item type.
         order_dir : str
             Optional. "ASC" or "DESC" to specify order direction.
+        debug : bool (optional, default: False)
+            If True, include all requests responses in the response.
 
         Returns
         -------
         Dict
-            A dictionary with keys:
-            "base_url": the full API call url, without pagination info.
-            "result": the result of the search query.
+            The result of the search query. With the following keys:
+            success : bool
+                True if all requests had status 200
+            error : str (optional)
+                If success is False, this will contain an 
+                error description.
+            data : list (optional)
+                Data returned from the api if success is True
+            responses : list (optional)
+                Requests response objects for each API call.
+                Only added if debug is True.
 
         Raises
         ------
         ValueError
             If order_by is a field name that is not in self.fields
             If order_dir is not either "ASC" or "DESC"
-        Exception
-            If the API request returns with another status code than 200.
         """
         # Setup request parameters
         ## Fixed params
@@ -202,25 +226,31 @@ class Item:
             params += f'&order_dir={order_dir}'
         # Url setup
         base_url = f'{settings.base_url}/{self.route}{params}'
-        # Perform request, including pagination
-        final_result = {}
-        final_result['base_url'] = base_url
-        result = []
-        req = 1
-        has_more = True
-        url = f'{base_url}&page={req}'
-        while has_more:
-            resp = requests.get(url)
-            if resp.status_code == 200:
-                data = resp.json()
-                result.extend(data['items'])
-                has_more = data['has_more']
-                req += 1
-                url = f'{base_url}&page={req}'
+        # Setup datastructure for return to caller
+        final_result = {} # dict to return to caller
+        final_result['success'] = True # Assume success until encounter problem
+        result_data = [] # Concat data here
+        result_responses = [] # Store requests responses here for debug
+        req_nr = 1 # Request nr
+        has_more = True # Make sure request is performed at least once
+        url = f'{base_url}&page={req_nr}' # Add pagination to url
+        while has_more: # Loop until pagination completes
+            result_responses[req_nr] = requests.get(url) # Perform request
+            if result_responses[req_nr].status_code == 200: # Success: get data
+                resp_data = result_responses[req_nr].json() # Extract data
+                result_data.extend(resp_data['items']) # Add to total data to return
+                has_more = resp_data['has_more'] # Check if more data exists
+                req_nr += 1 # Increase request counter
+                url = f'{base_url}&page={req_nr}' # Update URL for next page
             else:
-                msg = f'API call failed with status code: {resp.status_code}'
-                raise Exception(msg)
-        final_result['result'] = result
+                final_result['success'] = False
+                msg = f'Request nr {req_nr} failed with status code: {result_responses[req_nr].status_code}'
+                final_result['error'] = msg
+                break
+        if final_result['success']:
+            final_result['data'] = result_data
+        if debug:
+            final_result['responses'] = result_responses
         return final_result
 
 
@@ -230,8 +260,8 @@ class Item:
         settings: Settings, 
         id: str,
         fields: Optional[ List[str] ] = None
-    ) -> Dict[str,Any]:
-        """Get a note by ID
+    ) -> requests.Response:
+        """Get an entity instance by ID
 
         Parameters
         ----------
@@ -247,8 +277,9 @@ class Item:
 
         Returns
         -------
-        Dict
-            The json form of the requests response.
+        requests.Response
+            The response object fromt the request.
+            To access it's contents, call response.json() to extract data.
         """
         # Setup request parameters
         ## Default params
@@ -259,8 +290,7 @@ class Item:
             params += f'&fields={fieldnames}'
         # Url setup
         url = f'{settings.base_url}/{self.route}/{id}{params}'
-        resp = requests.get(url)
-        return resp.json()
+        return requests.get(url)
     
 
     def create(
@@ -268,7 +298,7 @@ class Item:
         api_key: str, 
         settings: Settings, 
         data: Dict[str, Any] | str
-    ) -> Dict[str, Any]:
+    ) -> requests.Response:
         """POST a new entity to the api. 
         
         Parameters
@@ -284,8 +314,9 @@ class Item:
 
         Returns
         -------
-        Dict
-            The json form of the requests response.
+        requests.Response
+            The response object of the request.
+            Call response.json() to access it's data.
 
         Raises
         ------
@@ -306,8 +337,7 @@ class Item:
         # Setup url
         url = f'{settings.base_url}/{self.route}{params}'
         # Perform request
-        resp = requests.post(url, json=data)
-        return resp.json()
+        return requests.post(url, json=data)
 
 
 
@@ -411,7 +441,7 @@ class Tag(Item):
         settings: Settings, 
         tag_id: str, 
         note_id: str
-    ) -> Dict[str, Any]:
+    ) -> requests.Response:
         """Add this tag to a note
 
         Parameters
@@ -427,8 +457,9 @@ class Tag(Item):
 
         Returns
         -------
-        Dict[str, Any]
-            The requests response in json dict form.
+        requests.Response
+            The response object of the request. 
+            Call response.json() to access it's data.
         """
         # Setup request parameters
         params = f'?token={api_key}'
@@ -437,8 +468,7 @@ class Tag(Item):
         # Setup request payload
         data = {'id': note_id}
         # Perform request
-        resp = requests.post(url, json=data)
-        return resp.json()
+        return requests.post(url, json=data)
 
 
 
