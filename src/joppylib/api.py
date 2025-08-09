@@ -136,16 +136,16 @@ class Item:
         has_more = True # Make sure request is performed at least once
         url = f'{base_url}&page={req_nr}' # Add pagination to url
         while has_more: # Loop until pagination completes
-            result_responses[req_nr] = requests.get(url) # Perform request
-            if result_responses[req_nr].status_code == 200: # Success: get data
-                resp_data = result_responses[req_nr].json() # Extract data
+            result_responses[req_nr - 1] = requests.get(url) # Perform request
+            if result_responses[req_nr - 1].status_code == 200: # Success: get data
+                resp_data = result_responses[req_nr - 1].json() # Extract data
                 result_data.extend(resp_data['items']) # Add to total data to return
                 has_more = resp_data['has_more'] # Check if more data exists
                 req_nr += 1 # Increase request counter
                 url = f'{base_url}&page={req_nr}' # Update URL for next page
             else:
                 final_result['success'] = False
-                msg = f'Request nr {req_nr} failed with status code: {result_responses[req_nr].status_code}'
+                msg = f'Request nr {req_nr} failed with status code: {result_responses[req_nr - 1].status_code}'
                 final_result['error'] = msg
                 break
         if final_result['success']:
@@ -235,16 +235,16 @@ class Item:
         has_more = True # Make sure request is performed at least once
         url = f'{base_url}&page={req_nr}' # Add pagination to url
         while has_more: # Loop until pagination completes
-            result_responses[req_nr] = requests.get(url) # Perform request
-            if result_responses[req_nr].status_code == 200: # Success: get data
-                resp_data = result_responses[req_nr].json() # Extract data
+            result_responses[req_nr - 1] = requests.get(url) # Perform request
+            if result_responses[req_nr - 1].status_code == 200: # Success: get data
+                resp_data = result_responses[req_nr - 1].json() # Extract data
                 result_data.extend(resp_data['items']) # Add to total data to return
                 has_more = resp_data['has_more'] # Check if more data exists
                 req_nr += 1 # Increase request counter
                 url = f'{base_url}&page={req_nr}' # Update URL for next page
             else:
                 final_result['success'] = False
-                msg = f'Request nr {req_nr} failed with status code: {result_responses[req_nr].status_code}'
+                msg = f'Request nr {req_nr} failed with status code: {result_responses[req_nr - 1].status_code}'
                 final_result['error'] = msg
                 break
         if final_result['success']:
