@@ -1,11 +1,10 @@
 """Interacting with the Joplin Data API
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any
 import requests
 
-if TYPE_CHECKING:
-    from .config import Settings
+from .config import Settings
 
 
 class Item:
