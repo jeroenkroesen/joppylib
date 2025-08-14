@@ -286,8 +286,7 @@ class Item:
             To access it's contents, call response.json() to extract data.
         """
         # Setup request parameters
-        ## Default params
-        params = f'?token={api_key}'
+        params = f'?token={api_key}' ## Default params
         ## Optional params
         if fields:
             fieldnames = self.fields_to_params(fields)
@@ -295,7 +294,7 @@ class Item:
         # Url setup
         url = f'{settings.base_url}/{self.route}/{id}{params}'
         return requests.get(url)
-    
+   
 
     def create(
         self, 
@@ -336,12 +335,9 @@ class Item:
                 if field not in data.keys():
                     msg = f'Required field {field} was not found in data.'
                     raise ValueError(msg)
-        # Setup request parameters
-        params = f'?token={api_key}'
-        # Setup url
-        url = f'{settings.base_url}/{self.route}{params}'
-        # Perform request
-        return requests.post(url, json=data)
+        params = f'?token={api_key}' # Setup request parameters
+        url = f'{settings.base_url}/{self.route}{params}' # Setup url
+        return requests.post(url, json=data) # Perform request
 
 
 
@@ -401,6 +397,49 @@ class Note(Item):
         'image_data_url',
         'crop_rect'
     ]
+
+    def get_all_tags(
+        self,
+        api_key: str,
+        settings: Settings,
+        note_id: str,
+        debug: Optional[bool] = False
+    ) -> Dict[str,Any]:
+        """Get all tags attached to this note
+        """
+        # Setup request parameters
+        ## Fixed params
+        params = f'?token={api_key}&limit={settings.pagesize}'
+        # Url setup
+        base_url = f'{settings.base_url}/{self.route}/{note_id}/tags{params}'
+        # Setup datastructure for return to caller
+        final_result = {} # dict to return to caller
+        final_result['success'] = True # Assume success until encounter problem
+        result_data = [] # Concat data here
+        result_responses = [] # Store requests responses here for debug
+        req_nr = 1 # Request nr
+        req_index = req_nr - 1
+        has_more = True # Make sure request is performed at least once
+        url = f'{base_url}&page={req_nr}' # Add pagination to url
+        while has_more: # Loop until pagination completes
+            result_responses.append(requests.get(url)) # Perform request
+            if result_responses[req_index].status_code == 200: # Success: get data
+                resp_data = result_responses[req_index].json() # Extract data
+                result_data.extend(resp_data['items']) # Add to total data to return
+                has_more = resp_data['has_more'] # Check if more data exists
+                req_nr += 1 # Increase request counter
+                req_index += 1
+                url = f'{base_url}&page={req_nr}' # Update URL for next page
+            else:
+                final_result['success'] = False
+                msg = f'Request nr {req_nr} failed with status code: {result_responses[req_index].status_code}'
+                final_result['error'] = msg
+                break
+        if final_result['success']:
+            final_result['data'] = result_data
+        if debug:
+            final_result['responses'] = result_responses
+        return final_result
 
 
 
@@ -464,15 +503,12 @@ class Tag(Item):
         requests.Response
             The response object of the request. 
             Call response.json() to access it's data.
-        """
-        # Setup request parameters
-        params = f'?token={api_key}'
+        """ 
+        params = f'?token={api_key}' # Setup request parameters
         # Setup URL
         url = f'{settings.base_url}/{self.route}/{tag_id}/notes{params}'
-        # Setup request payload
-        data = {'id': note_id}
-        # Perform request
-        return requests.post(url, json=data)
+        data = {'id': note_id} # Setup request payload
+        return requests.post(url, json=data) # Perform request
 
 
 
@@ -562,6 +598,8 @@ class Resource(Item):
         'ocr_error'
     ]
     # TODO: Override POST function to deal with resource specifics
+    ## Posting already works for notes, tags and notebooks. 
+    ## Probably needs overriding for resources. 
 
 
 

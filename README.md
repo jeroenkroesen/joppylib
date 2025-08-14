@@ -21,8 +21,17 @@ Very alpha testing release.
 - [x] Clean up and document old personal codebase
 - [ ] Complete api layer (`api.py`)
     - [x] Generate packages on github to allow pip install when testing.
-    - [ ] Override POST function for each entity
+    - [ ] Implement PUT
+    - [ ] Implement better tag functions
+        - [ ] Delete tag from note
+        - [ ] Get all tags attached to a note
     - [ ] Test API functionality
-    - [ ] Demonstrate low-level interface in [notebook](https://github.com/jeroenkroesen/joppylib-notebook)
+    - [x] Demonstrate low-level interface in [notebook](https://github.com/jeroenkroesen/joppylib-notebook)
 - [ ] Design higher level interface
 - [ ] Implement higher level interface  
+
+***
+  
+  
+## Reference
+[Joplin Data API documentation](https://joplinapp.org/help/api/references/rest_api/)
