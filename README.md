@@ -12,23 +12,23 @@ An [example Jupyter notebook interface](https://github.com/jeroenkroesen/joppyli
 ***  
   
 ## Status
-Current release: joppylib-0.1.0a7-py3-none-any
+Current release: joppylib-0.1.0a8-py3-none-any
 Very alpha testing release.
 ***  
   
   
 ## Roadmap
 - [x] Clean up and document old personal codebase
-- [ ] Complete api layer (`api.py`)
+- [ ] Complete api layer (`api_client.py`)
     - [x] Generate packages on github to allow pip install when testing.
-    - [ ] Implement PUT
-    - [ ] Implement better tag functions
-        - [ ] Delete tag from note
-        - [ ] Get all tags attached to a note
+    - [x] Implement PUT
+    - [x] Implement better tag functions
+        - [x] Delete tag from note
+        - [x] Get all tags attached to a note
     - [ ] Test API functionality
     - [x] Demonstrate low-level interface in [notebook](https://github.com/jeroenkroesen/joppylib-notebook)
-- [ ] Design higher level interface
-- [ ] Implement higher level interface  
+- [x] Design higher level interface
+- [x] Implement higher level interface  
 
 ***
   

@@ -1,6 +1,6 @@
 [project]
 name = "joppylib"
-version = "0.1.0a7"
+version = "0.1.0a8"
 description = "A thin abstraction layer over the Joplin Data API"
 readme = "README.md"
 authors = [

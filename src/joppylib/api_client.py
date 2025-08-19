@@ -1,4 +1,4 @@
-"""Interacting with the Joplin Data API
+"""CRUD for the Joplin Data API
 """
 
 from typing import Dict, List, Optional, Any
@@ -174,8 +174,6 @@ class Item:
             A valid API key to authenticate to the Joplin Data API
         settings : Settings
             A settings object from config.Settings
-        query : str
-            The search query. See the Joplin API for query syntax
         fields: List[str]
             Optional. A list of object fields to include in the results
             Fields will be checked against the item types allowed fields
@@ -340,6 +338,40 @@ class Item:
         return requests.post(url, json=data) # Perform request
 
 
+    def update(
+        self, 
+        api_key: str, 
+        settings: Settings, 
+        data: Dict[str, Any]
+    ) -> requests.Response:
+        """Update an existing entity 
+        
+        Parameters
+        ----------
+        api_key : str
+            A valid API key to authenticate to the Joplin Data API
+        settings : Settings
+            A settings object from config.Settings
+        data : Dict[str, Any]
+            The data for the object to create.
+
+        Returns
+        -------
+        requests.Response
+            The response object of the request.
+            Call response.json() to access it's data.
+
+        Raises
+        ------
+        ValueError
+            If data is a dict and a required field is not found among 
+            its keys.
+        """
+        params = f'?token={api_key}' # Setup request parameters
+        url = f'{settings.base_url}/{self.route}{params}' # Setup url
+        return requests.put(url, json=data) # Perform request
+
+
 
 class Note(Item):
     """Interact with notes in Joplin via the webclipper API
@@ -406,6 +438,32 @@ class Note(Item):
         debug: Optional[bool] = False
     ) -> Dict[str,Any]:
         """Get all tags attached to this note
+
+        Parameters
+        ----------
+        api_key : str
+            A valid API key to authenticate to the Joplin Data API
+        settings : Settings
+            A settings object from config.Settings
+        note_id : str
+            ID of the note to get all tags for.
+        debug : bool (optional, default: False)
+            If True, include all requests responses in the response.
+
+        Returns
+        -------
+        Dict
+            The result of the query, with the following keys:
+            success : bool
+                True if all requests had status 200
+            error : str (optional)
+                If success is False, this will contain an 
+                error description.
+            data : list (optional)
+                Data returned from the api if success is True
+            responses : list (optional)
+                Requests response objects for each API call.
+                Only added if debug is True.
         """
         # Setup request parameters
         ## Fixed params
@@ -503,12 +561,44 @@ class Tag(Item):
         requests.Response
             The response object of the request. 
             Call response.json() to access it's data.
-        """ 
+        """
         params = f'?token={api_key}' # Setup request parameters
         # Setup URL
         url = f'{settings.base_url}/{self.route}/{tag_id}/notes{params}'
         data = {'id': note_id} # Setup request payload
         return requests.post(url, json=data) # Perform request
+
+
+    def remove_from_note(
+        self, 
+        api_key: str, 
+        settings: Settings, 
+        tag_id: str, 
+        note_id: str
+    ) -> requests.Response:
+        """Remove this tag from a note
+
+        Parameters
+        ----------
+        api_key : str
+            A valid API key to authenticate to the Joplin Data API
+        settings : Settings
+            A settings object from config.Settings
+        tag_id : str
+            The ID of the tag to remove from note
+        note_id : str
+            The ID of the note to remove this tag from.
+
+        Returns
+        -------
+        requests.Response
+            The response object of the request. 
+            Call response.json() to access it's data.
+        """
+        params = f'?token={api_key}' # Setup request parameters
+        # Setup URL
+        url = f'{settings.base_url}/{self.route}/{tag_id}/notes/{note_id}{params}'
+        return requests.delete(url) # Perform request
 
 
 
@@ -668,3 +758,17 @@ class Event(Item):
         'source',
         'before_change_item',
     ]
+
+
+
+
+class APIClient:
+    """Low-level client for the Joplin Data API
+    """
+    def __init__(self) -> None:
+        self.note = Note()
+        self.tag = Tag()
+        self.folder = Folder()
+        self.event = Event()
+        self.resource = Resource()
+        self.revision = Revision()
