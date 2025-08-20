@@ -240,7 +240,8 @@ class Item:
     
     def delete(
         self,  
-        id: str
+        id: str,
+        trash: Optional[bool] = True
     ) -> requests.Response:
         """Get an entity instance by ID
 
@@ -248,17 +249,21 @@ class Item:
         ----------
         id : str
             The ID of the item to get
+        trash : bool (default: True)
+            If True, move the note to trash. If false, permanently 
+            delete it.
 
         Returns
         -------
         requests.Response
             The response object fromt the request.
-            To access it's contents, call response.json() to extract data.
+            There will be no json content. 
         """
         return self.__api_client.delete(
             self.__api_key,
             self.settings,
-            id
+            id,
+            trash
         )
 
 

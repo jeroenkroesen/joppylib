@@ -379,7 +379,8 @@ class Item:
         self, 
         api_key: str, 
         settings: Settings, 
-        id: str
+        id: str,
+        trash: Optional[bool] = True
     ) -> requests.Response:
         """Get an entity instance by ID
 
@@ -391,15 +392,20 @@ class Item:
             A settings object from config.Settings
         id : str
             The ID of the item to get
+        trash : bool (default: True)
+            If True, move the note to trash. If false, permanently 
+            delete it.
 
         Returns
         -------
         requests.Response
             The response object fromt the request.
-            To access it's contents, call response.json() to extract data.
+            There will be no json content
         """
         # Setup request parameters
         params = f'?token={api_key}' ## Default params
+        if not trash:
+            params += '&permanent=1'
         # Url setup
         url = f'{settings.base_url}/{self.route}/{id}{params}'
         return requests.delete(url)
