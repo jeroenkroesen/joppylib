@@ -12,7 +12,7 @@ An [example Jupyter notebook interface](https://github.com/jeroenkroesen/joppyli
 ***  
   
 ## Status
-Current release: joppylib-0.1.0a8-py3-none-any
+Current release: joppylib-0.1.0a9-py3-none-any
 Very alpha testing release.
 ***  
   
