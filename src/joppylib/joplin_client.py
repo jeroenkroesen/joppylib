@@ -207,13 +207,16 @@ class Item:
     
     
     def update(
-        self,  
+        self,
+        id: str,
         data: Dict[str, Any]
     ) -> requests.Response:
         """Update an existing entity 
         
         Parameters
         ----------
+        id: str
+            ID of the item to update
         data : Dict[str, Any]
             The data for the object to create.
 
@@ -230,7 +233,32 @@ class Item:
         return self.__api_client.update(
             self.__api_key,
             self.settings,
+            id,
             data
+        )
+    
+    
+    def delete(
+        self,  
+        id: str
+    ) -> requests.Response:
+        """Get an entity instance by ID
+
+        Parameters
+        ----------
+        id : str
+            The ID of the item to get
+
+        Returns
+        -------
+        requests.Response
+            The response object fromt the request.
+            To access it's contents, call response.json() to extract data.
+        """
+        return self.__api_client.delete(
+            self.__api_key,
+            self.settings,
+            id
         )
 
 

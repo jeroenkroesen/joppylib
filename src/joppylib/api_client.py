@@ -341,7 +341,8 @@ class Item:
     def update(
         self, 
         api_key: str, 
-        settings: Settings, 
+        settings: Settings,
+        id: str,
         data: Dict[str, Any]
     ) -> requests.Response:
         """Update an existing entity 
@@ -352,6 +353,8 @@ class Item:
             A valid API key to authenticate to the Joplin Data API
         settings : Settings
             A settings object from config.Settings
+        id: str
+            The ID of the item to update
         data : Dict[str, Any]
             The data for the object to create.
 
@@ -368,8 +371,38 @@ class Item:
             its keys.
         """
         params = f'?token={api_key}' # Setup request parameters
-        url = f'{settings.base_url}/{self.route}{params}' # Setup url
+        url = f'{settings.base_url}/{self.route}/{id}{params}' # Setup url
         return requests.put(url, json=data) # Perform request
+    
+    
+    def delete(
+        self, 
+        api_key: str, 
+        settings: Settings, 
+        id: str
+    ) -> requests.Response:
+        """Get an entity instance by ID
+
+        Parameters
+        ----------
+        api_key : str
+            A valid API key to authenticate to the Joplin Data API
+        settings : Settings
+            A settings object from config.Settings
+        id : str
+            The ID of the item to get
+
+        Returns
+        -------
+        requests.Response
+            The response object fromt the request.
+            To access it's contents, call response.json() to extract data.
+        """
+        # Setup request parameters
+        params = f'?token={api_key}' ## Default params
+        # Url setup
+        url = f'{settings.base_url}/{self.route}/{id}{params}'
+        return requests.delete(url)
 
 
 
