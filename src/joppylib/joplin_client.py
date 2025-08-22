@@ -27,8 +27,8 @@ class Item:
     ) -> None:
         self.name = name
         self.settings = settings
-        self.__api_key = api_key
-        self.__api_client = getattr(api_client, self.name)
+        self._api_key = api_key
+        self._api_client = getattr(api_client, self.name)
 
 
     def search(
@@ -77,8 +77,8 @@ class Item:
         api_client.py
             Lower-level implementation called by this method
         """
-        return self.__api_client.search(
-            self.__api_key,
+        return self._api_client.search(
+            self._api_key,
             self.settings,
             query,
             fields,
@@ -131,8 +131,8 @@ class Item:
         api_client.py
             Lower-level implementation called by this method.
         """
-        return self.__api_client.get_multi(
-            self.__api_key,
+        return self._api_client.get_multi(
+            self._api_key,
             self.settings,
             fields,
             order_by,
@@ -167,8 +167,8 @@ class Item:
         api_client.py
             Lower-level implementation called by this method.
         """
-        return self.__api_client.get(
-            self.__api_key,
+        return self._api_client.get(
+            self._api_key,
             self.settings,
             id,
             fields
@@ -199,8 +199,8 @@ class Item:
         api_client.py
             Lower-level implementation called by this method.
         """
-        return self.__api_client.create(
-            self.__api_key,
+        return self._api_client.create(
+            self._api_key,
             self.settings,
             data
         )
@@ -230,8 +230,8 @@ class Item:
         api_client.py
             Lower-level implementation called by this method.
         """
-        return self.__api_client.update(
-            self.__api_key,
+        return self._api_client.update(
+            self._api_key,
             self.settings,
             id,
             data
@@ -259,8 +259,8 @@ class Item:
             The response object fromt the request.
             There will be no json content. 
         """
-        return self.__api_client.delete(
-            self.__api_key,
+        return self._api_client.delete(
+            self._api_key,
             self.settings,
             id,
             trash
@@ -302,8 +302,8 @@ class Note(Item):
                 Requests response objects for each API call.
                 Only added if debug is True.
         """
-        return self.__api_client.get_all_tags(
-            self.__api_key,
+        return self._api_client.get_all_tags(
+            self._api_key,
             self.settings,
             note_id,
             debug
@@ -336,8 +336,8 @@ class Tag(Item):
             The response object of the request. 
             Call response.json() to access it's data.
         """
-        return self.__api_client.add_to_note(
-            self.__api_key,
+        return self._api_client.add_to_note(
+            self._api_key,
             self.settings,
             tag_id,
             note_id
@@ -364,8 +364,8 @@ class Tag(Item):
             The response object of the request. 
             Call response.json() to access it's data.
         """
-        return self.__api_client.remove_from_note(
-            self.__api_key,
+        return self._api_client.remove_from_note(
+            self._api_key,
             self.settings,
             tag_id,
             note_id
@@ -394,7 +394,7 @@ class JoplinClient:
             if not api_key:
                 m = 'api_key is required if auth_method = "key"'
                 raise ValueError(m)
-            self.__api_key = api_key
+            self._api_key = api_key
         elif auth_method == 'interactive':
             authenticated = self.authenticate()
             if not authenticated:
@@ -402,12 +402,12 @@ class JoplinClient:
                 raise AuthorizationDeniedError(m)
         # ---Instanticate Item interfaces---
         client = APIClient()
-        self.note = Note('note', settings, self.__api_key, client)
-        self.tag = Tag('tag', settings, self.__api_key, client)
-        self.folder = Item('folder', settings, self.__api_key, client)
-        self.event = Item('event', settings, self.__api_key, client)
-        self.resource = Item('resource', settings, self.__api_key, client)
-        self.revision = Item('revision', settings, self.__api_key, client)
+        self.note = Note('note', settings, self._api_key, client)
+        self.tag = Tag('tag', settings, self._api_key, client)
+        self.folder = Item('folder', settings, self._api_key, client)
+        self.event = Item('event', settings, self._api_key, client)
+        self.resource = Item('resource', settings, self._api_key, client)
+        self.revision = Item('revision', settings, self._api_key, client)
 
 
     def authenticate(self) -> bool:
@@ -422,7 +422,7 @@ class JoplinClient:
                 self.settings.auth_check_route
             )
             if result['status'] == 'accepted':
-                self.__api_key = result['token']
+                self._api_key = result['token']
                 return True
             else: 
                 return False
