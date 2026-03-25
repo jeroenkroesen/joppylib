@@ -57,17 +57,12 @@ Class-level mutable defaults. Not currently mutated, but a latent footgun if any
 
 ## 3. Robustness Issues
 
-### Auth polling loop has no timeout and no delay (`connection.py:77-81`)
-```python
-while True:
-    resp_check = requests.get(url_check)
-    data_check = resp_check.json()
-    if data_check['status'] != 'waiting':
-        return data_check
-```
-Two problems:
-1. If the user never responds to the Joplin auth dialog, this loops forever.
-2. There is no `time.sleep()` between polls — it hammers the local Joplin API as fast as Python can loop, which can make the Joplin UI sluggish.
+### ~~Auth polling loop has no timeout and no delay (`connection.py:77-81`)~~ RESOLVED
+~~Two problems:~~
+1. ~~If the user never responds to the Joplin auth dialog, this loops forever.~~
+2. ~~There is no `time.sleep()` between polls — it hammers the local Joplin API as fast as Python can loop, which can make the Joplin UI sluggish.~~
+
+**Fixed:** Auth polling now has a configurable timeout and a delay between polls.
 
 ### `get_auth_token` doesn't handle HTTP errors (`connection.py:73-74`)
 ```python
@@ -76,8 +71,10 @@ init_token = resp_init.json()['auth_token']
 ```
 If the POST returns a non-200 or non-JSON response, this crashes with an unhelpful `KeyError` or `JSONDecodeError`.
 
-### No timeout on any HTTP request
-Every `requests.get/post/put/delete` call has no `timeout` parameter. If Joplin freezes (not uncommon for an Electron app under load), the calling Python code hangs indefinitely.
+### ~~No timeout on any HTTP request~~ RESOLVED
+~~Every `requests.get/post/put/delete` call has no `timeout` parameter. If Joplin freezes (not uncommon for an Electron app under load), the calling Python code hangs indefinitely.~~
+
+**Fixed:** All HTTP requests now have a configurable timeout.
 
 ### No retry on paginated operations
 If page 3 of 5 fails, the entire operation fails and all data (including successfully fetched pages 1-2) is discarded.
@@ -108,7 +105,7 @@ Used as a parameter name throughout both layers. Convention is `item_id` or `id_
 
 ## 5. Testing & Quality
 
-### Zero tests
+### Zero tests — IN PROGRESS
 This is the single biggest risk. The git history shows multiple pagination and indexing bugs that were caught manually. The triplicated pagination loop is especially prone to regressions.
 
 ### No CI/CD pipeline
@@ -123,10 +120,10 @@ No GitHub Actions, no linting, no type checking configured. The `py.typed` marke
 
 | Priority | Issue | Why it matters |
 |----------|-------|----------------|
-| **High** | No request timeouts | Hangs if Joplin freezes |
-| **High** | Auth polling: no timeout, no delay | Infinite loop, pegs CPU, makes Joplin sluggish |
+| ~~**High**~~ | ~~No request timeouts~~ | ~~Hangs if Joplin freezes~~ **RESOLVED** |
+| ~~**High**~~ | ~~Auth polling: no timeout, no delay~~ | ~~Infinite loop, pegs CPU, makes Joplin sluggish~~ **RESOLVED** |
 | **High** | URL query not encoded | Searches with special characters break silently |
-| **High** | No tests | Every change risks regressions (proven by history) |
+| **High** | No tests | Every change risks regressions (proven by history) — **IN PROGRESS** |
 | **Medium** | Pagination loop duplicated 3x | Already caused bugs; will again |
 | **Medium** | Inconsistent return types (Response vs Dict) | Confusing API for consumers |
 | **Medium** | No `requests.Session` | Missed connection reuse, no central timeout config |
