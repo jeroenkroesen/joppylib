@@ -137,7 +137,7 @@ class Item:
         has_more = True # Make sure request is performed at least once
         url = f'{base_url}&page={req_nr}' # Add pagination to url
         while has_more: # Loop until pagination completes
-            result_responses.append(requests.get(url)) # Perform request
+            result_responses.append(requests.get(url, timeout=(3, 10))) # Perform request
             if result_responses[req_index].status_code == 200: # Success: get data
                 resp_data = result_responses[req_index].json() # Extract data
                 result_data.extend(resp_data['items']) # Add to total data to return
@@ -156,7 +156,7 @@ class Item:
             final_result['responses'] = result_responses
         return final_result
 
-    
+
     def get_multi(
         self, 
         api_key: str, 
@@ -236,7 +236,7 @@ class Item:
         has_more = True # Make sure request is performed at least once
         url = f'{base_url}&page={req_nr}' # Add pagination to url
         while has_more: # Loop until pagination completes
-            result_responses.append(requests.get(url)) # Perform request
+            result_responses.append(requests.get(url, timeout=(3, 10))) # Perform request
             if result_responses[req_index].status_code == 200: # Success: get data
                 resp_data = result_responses[req_index].json() # Extract data
                 result_data.extend(resp_data['items']) # Add to total data to return
@@ -291,8 +291,8 @@ class Item:
             params += f'&fields={fieldnames}'
         # Url setup
         url = f'{settings.base_url}/{self.route}/{id}{params}'
-        return requests.get(url)
-   
+        return requests.get(url, timeout=(3, 10))
+
 
     def create(
         self, 
@@ -335,7 +335,7 @@ class Item:
                     raise ValueError(msg)
         params = f'?token={api_key}' # Setup request parameters
         url = f'{settings.base_url}/{self.route}{params}' # Setup url
-        return requests.post(url, json=data) # Perform request
+        return requests.post(url, json=data, timeout=(3, 10)) # Perform request
 
 
     def update(
@@ -372,9 +372,9 @@ class Item:
         """
         params = f'?token={api_key}' # Setup request parameters
         url = f'{settings.base_url}/{self.route}/{id}{params}' # Setup url
-        return requests.put(url, json=data) # Perform request
-    
-    
+        return requests.put(url, json=data, timeout=(3, 10)) # Perform request
+
+
     def delete(
         self, 
         api_key: str, 
@@ -408,7 +408,7 @@ class Item:
             params += '&permanent=1'
         # Url setup
         url = f'{settings.base_url}/{self.route}/{id}{params}'
-        return requests.delete(url)
+        return requests.delete(url, timeout=(3, 10))
 
 
 
@@ -519,7 +519,7 @@ class Note(Item):
         has_more = True # Make sure request is performed at least once
         url = f'{base_url}&page={req_nr}' # Add pagination to url
         while has_more: # Loop until pagination completes
-            result_responses.append(requests.get(url)) # Perform request
+            result_responses.append(requests.get(url, timeout=(3, 10))) # Perform request
             if result_responses[req_index].status_code == 200: # Success: get data
                 resp_data = result_responses[req_index].json() # Extract data
                 result_data.extend(resp_data['items']) # Add to total data to return
@@ -605,7 +605,7 @@ class Tag(Item):
         # Setup URL
         url = f'{settings.base_url}/{self.route}/{tag_id}/notes{params}'
         data = {'id': note_id} # Setup request payload
-        return requests.post(url, json=data) # Perform request
+        return requests.post(url, json=data, timeout=(3, 10)) # Perform request
 
 
     def remove_from_note(
@@ -637,7 +637,7 @@ class Tag(Item):
         params = f'?token={api_key}' # Setup request parameters
         # Setup URL
         url = f'{settings.base_url}/{self.route}/{tag_id}/notes/{note_id}{params}'
-        return requests.delete(url) # Perform request
+        return requests.delete(url, timeout=(3, 10)) # Perform request
 
 
 

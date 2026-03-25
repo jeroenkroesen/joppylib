@@ -1,6 +1,8 @@
 """Helper functions to connect to the Joplin webclipper API
 """
 
+import time
+
 import requests
 
 
@@ -28,17 +30,19 @@ def check_connection(
     """
     url_ping = f'{base_url}/{route_ping}'
     try:
-        requests.get(url_ping)
-        return True
-    except requests.exceptions.ConnectionError:
+        resp = requests.get(url_ping, timeout=(3, 5))
+        return resp.ok
+    except requests.exceptions.RequestException:
         return False
 
 
 
 def get_auth_token(
-    base_url: str = 'http://localhost:41184', 
-    route_init: str = 'auth', 
-    route_check: str = 'auth/check'
+    base_url: str = 'http://localhost:41184',
+    route_init: str = 'auth',
+    route_check: str = 'auth/check',
+    poll_interval: float = 1.0,
+    poll_timeout: float = 120.0
 ) -> dict:
     """Attempt to get an API auth token interactively
 
@@ -70,12 +74,17 @@ def get_auth_token(
     # User will be presented popup in Joplin to allow access
     # init_token allows checking the status
     url_init = f'{base_url}/{route_init}'
-    resp_init = requests.post(url_init)
+    resp_init = requests.post(url_init, timeout=(3, 5))
     init_token = resp_init.json()['auth_token']
     # Check if the user has responded and return in case of result
     url_check = f'{base_url}/{route_check}?auth_token={init_token}'
-    while True:
-        resp_check = requests.get(url_check)
+    deadline = time.monotonic() + poll_timeout
+    while time.monotonic() < deadline:
+        resp_check = requests.get(url_check, timeout=(3, 5))
         data_check = resp_check.json()
         if data_check['status'] != 'waiting':
             return data_check
+        time.sleep(poll_interval)
+    raise TimeoutError(
+        f'No response to auth request within {poll_timeout} seconds'
+    )
