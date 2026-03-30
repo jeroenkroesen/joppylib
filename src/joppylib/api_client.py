@@ -49,83 +49,38 @@ class Item:
         return f'{",".join(fields)}'
 
     
-    def search(
-        self, 
-        api_key: str, 
-        settings: Settings, 
-        query: str,
-        fields: Optional[ List[str] ] = None, 
-        order_by: Optional[str] = None,
-        order_dir: Optional[str] = None,
-        debug: Optional[bool] = False
+    def _paginate(
+        self,
+        base_url: str,
+        params: Dict[str, Any],
+        debug: bool = False
     ) -> Dict[str, Any]:
-        """Search using the API
+        """Fetch all pages from a paginated Joplin API endpoint.
 
         Parameters
         ----------
-        api_key : str
-            A valid API key to authenticate to the Joplin Data API
-        settings : Settings
-            A settings object from config.Settings
-        query : str
-            The search query. See the Joplin API for query syntax
-        fields: List[str] (optional)
-            A list of object fields to include in the results.
-            Fields will be checked against the item type's allowed fields.
-        order_by : str (optional)
-            A field to order the results by. If specified, 
-            the field will be checked against allowed fields for the 
-            item type.
-        order_dir : str (optional)
-            "ASC" or "DESC" to specify order direction.
+        base_url : str
+            The API endpoint URL (without query parameters).
+        params : Dict[str, Any]
+            Query parameters to pass to requests.get(). The 'page' key
+            will be managed automatically by this method.
         debug : bool (optional, default: False)
             If True, include all requests responses in the response.
 
         Returns
         -------
         Dict
-            The result of the search query. With the following keys:
             success : bool
                 True if all requests had status 200
             error : str (optional)
-                If success is False, this will contain an 
+                If success is False, this will contain an
                 error description.
             data : list (optional)
                 Data returned from the api if success is True
             responses : list (optional)
                 Requests response objects for each API call.
                 Only added if debug is True.
-
-        Raises
-        ------
-        ValueError
-            If order_by is a field name that is not in self.fields
-            If order_dir is not either "ASC" or "DESC"
         """
-        # Setup params
-        ## Fixed params
-        params = {'query': query, 'token': api_key, 'limit': settings.pagesize}
-        # Default assumes we're searching notes. If not, the item type must
-        #  be added to the parameters
-        if self.name != 'note':
-            params['type'] = self.name
-        ## Optional params
-        if fields:
-            # validate fields in list and turn into comma-separated string
-            params['fields'] = self.fields_to_params(fields)
-        if order_by:
-            if order_by not in self.fields:
-                msg = f'{order_by} is not a valid field to order by'
-                raise ValueError(msg)
-            params['order_by'] = order_by
-        if order_dir:
-            if order_dir not in ['ASC', 'DESC']:
-                msg = f'{order_dir} is not valid. Use ASC or DESC'
-                raise ValueError(msg)
-            params['order_dir'] = order_dir
-        # Base url: url without query parameters
-        base_url = f'{settings.base_url}/{settings.search_route}'
-        # Setup datastructure for return to caller
         final_result = {} # dict to return to caller
         final_result['success'] = True # Assume success until encounter problem
         result_data = [] # Concat data here
@@ -153,6 +108,81 @@ class Item:
         if debug:
             final_result['responses'] = result_responses
         return final_result
+
+
+    def search(
+        self,
+        api_key: str,
+        settings: Settings,
+        query: str,
+        fields: Optional[ List[str] ] = None,
+        order_by: Optional[str] = None,
+        order_dir: Optional[str] = None,
+        debug: Optional[bool] = False
+    ) -> Dict[str, Any]:
+        """Search using the API
+
+        Parameters
+        ----------
+        api_key : str
+            A valid API key to authenticate to the Joplin Data API
+        settings : Settings
+            A settings object from config.Settings
+        query : str
+            The search query. See the Joplin API for query syntax
+        fields: List[str] (optional)
+            A list of object fields to include in the results.
+            Fields will be checked against the item type's allowed fields.
+        order_by : str (optional)
+            A field to order the results by. If specified,
+            the field will be checked against allowed fields for the
+            item type.
+        order_dir : str (optional)
+            "ASC" or "DESC" to specify order direction.
+        debug : bool (optional, default: False)
+            If True, include all requests responses in the response.
+
+        Returns
+        -------
+        Dict
+            The result of the search query. With the following keys:
+            success : bool
+                True if all requests had status 200
+            error : str (optional)
+                If success is False, this will contain an
+                error description.
+            data : list (optional)
+                Data returned from the api if success is True
+            responses : list (optional)
+                Requests response objects for each API call.
+                Only added if debug is True.
+
+        Raises
+        ------
+        ValueError
+            If order_by is a field name that is not in self.fields
+            If order_dir is not either "ASC" or "DESC"
+        """
+        # Setup params
+        params = {'query': query, 'token': api_key, 'limit': settings.pagesize}
+        # Default assumes we're searching notes. If not, the item type must
+        #  be added to the parameters
+        if self.name != 'note':
+            params['type'] = self.name
+        if fields:
+            params['fields'] = self.fields_to_params(fields)
+        if order_by:
+            if order_by not in self.fields:
+                msg = f'{order_by} is not a valid field to order by'
+                raise ValueError(msg)
+            params['order_by'] = order_by
+        if order_dir:
+            if order_dir not in ['ASC', 'DESC']:
+                msg = f'{order_dir} is not valid. Use ASC or DESC'
+                raise ValueError(msg)
+            params['order_dir'] = order_dir
+        base_url = f'{settings.base_url}/{settings.search_route}'
+        return self._paginate(base_url, params, debug)
 
 
     def get_multi(
@@ -205,53 +235,22 @@ class Item:
             If order_by is a field name that is not in self.fields
             If order_dir is not either "ASC" or "DESC"
         """
-        # Setup request parameters
-        ## Fixed params
-        params = f'?token={api_key}&limit={settings.pagesize}'
-        ## Optional params
+        # Setup params
+        params = {'token': api_key, 'limit': settings.pagesize}
         if fields:
-            fieldnames = self.fields_to_params(fields)
-            params += f'&fields={fieldnames}'
+            params['fields'] = self.fields_to_params(fields)
         if order_by:
             if order_by not in self.fields:
                 msg = f'{order_by} is not a valid field to order by'
                 raise ValueError(msg)
-            params += f'&order_by={order_by}'
+            params['order_by'] = order_by
         if order_dir:
             if order_dir not in ['ASC', 'DESC']:
                 msg = f'{order_dir} is not valid. Use ASC or DESC'
                 raise ValueError(msg)
-            params += f'&order_dir={order_dir}'
-        # Url setup
-        base_url = f'{settings.base_url}/{self.route}{params}'
-        # Setup datastructure for return to caller
-        final_result = {} # dict to return to caller
-        final_result['success'] = True # Assume success until encounter problem
-        result_data = [] # Concat data here
-        result_responses = [] # Store requests responses here for debug
-        req_nr = 1 # Request nr
-        req_index = req_nr - 1
-        has_more = True # Make sure request is performed at least once
-        url = f'{base_url}&page={req_nr}' # Add pagination to url
-        while has_more: # Loop until pagination completes
-            result_responses.append(requests.get(url, timeout=(3, 10))) # Perform request
-            if result_responses[req_index].status_code == 200: # Success: get data
-                resp_data = result_responses[req_index].json() # Extract data
-                result_data.extend(resp_data['items']) # Add to total data to return
-                has_more = resp_data['has_more'] # Check if more data exists
-                req_nr += 1 # Increase request counter
-                req_index += 1
-                url = f'{base_url}&page={req_nr}' # Update URL for next page
-            else:
-                final_result['success'] = False
-                msg = f'Request nr {req_nr} failed with status code: {result_responses[req_index].status_code}'
-                final_result['error'] = msg
-                break
-        if final_result['success']:
-            final_result['data'] = result_data
-        if debug:
-            final_result['responses'] = result_responses
-        return final_result
+            params['order_dir'] = order_dir
+        base_url = f'{settings.base_url}/{self.route}'
+        return self._paginate(base_url, params, debug)
 
 
     def get(
@@ -502,39 +501,10 @@ class Note(Item):
                 Requests response objects for each API call.
                 Only added if debug is True.
         """
-        # Setup request parameters
-        ## Fixed params
-        params = f'?token={api_key}&limit={settings.pagesize}'
-        # Url setup
-        base_url = f'{settings.base_url}/{self.route}/{note_id}/tags{params}'
-        # Setup datastructure for return to caller
-        final_result = {} # dict to return to caller
-        final_result['success'] = True # Assume success until encounter problem
-        result_data = [] # Concat data here
-        result_responses = [] # Store requests responses here for debug
-        req_nr = 1 # Request nr
-        req_index = req_nr - 1
-        has_more = True # Make sure request is performed at least once
-        url = f'{base_url}&page={req_nr}' # Add pagination to url
-        while has_more: # Loop until pagination completes
-            result_responses.append(requests.get(url, timeout=(3, 10))) # Perform request
-            if result_responses[req_index].status_code == 200: # Success: get data
-                resp_data = result_responses[req_index].json() # Extract data
-                result_data.extend(resp_data['items']) # Add to total data to return
-                has_more = resp_data['has_more'] # Check if more data exists
-                req_nr += 1 # Increase request counter
-                req_index += 1
-                url = f'{base_url}&page={req_nr}' # Update URL for next page
-            else:
-                final_result['success'] = False
-                msg = f'Request nr {req_nr} failed with status code: {result_responses[req_index].status_code}'
-                final_result['error'] = msg
-                break
-        if final_result['success']:
-            final_result['data'] = result_data
-        if debug:
-            final_result['responses'] = result_responses
-        return final_result
+        # Setup params
+        params = {'token': api_key, 'limit': settings.pagesize}
+        base_url = f'{settings.base_url}/{self.route}/{note_id}/tags'
+        return self._paginate(base_url, params, debug)
 
 
 
