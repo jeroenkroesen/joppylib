@@ -46,11 +46,15 @@ except requests.exceptions.ConnectionError:
 
 **Accepted:** The split maps to a real architectural difference — single-request methods return the raw Response (full access to status, headers, body), while paginated methods aggregate multiple responses into a Dict wrapper. Unifying would either lose information (Response direction) or add unnecessary wrapping (Dict direction). Downstream consumer JopBrainLib already handles both patterns. Type hints document the contract per method.
 
-### `name` class attribute collision in `joplin_client`
-`joplin_client.Note` has class attribute `name: str = 'note'`, but its inherited `__init__` takes `name` as a parameter and overwrites it via `self.name = name`. The class attribute is dead code. Same for `Tag`.
+### ~~`name` class attribute collision in `joplin_client`~~ RESOLVED
+~~`joplin_client.Note` has class attribute `name: str = 'note'`, but its inherited `__init__` takes `name` as a parameter and overwrites it via `self.name = name`. The class attribute is dead code. Same for `Tag`.~~
 
-### Unused `ITEM_TYPE` constant
-`defaults.py` defines `ITEM_TYPE = 'note'` but it is never referenced anywhere in the codebase.
+**Fixed:** Removed dead `name` class attributes from `Note` and `Tag` in `joplin_client.py`. Also corrected `Tag` docstring from "Interact with items" to "Interact with tags".
+
+### ~~Unused `ITEM_TYPE` constant~~ RESOLVED
+~~`defaults.py` defines `ITEM_TYPE = 'note'` but it is never referenced anywhere in the codebase.~~
+
+**Fixed:** Removed `ITEM_TYPE = 'note'` from `defaults.py`.
 
 ### Mutable default class attributes (`api_client.py:28-29`)
 ```python
@@ -142,4 +146,4 @@ No GitHub Actions, no linting, no type checking configured. The `py.typed` marke
 | ~~**Medium**~~ | ~~`check_connection` ignores status codes~~ | ~~False positives~~ **RESOLVED** |
 | ~~**Low**~~ | ~~Copy-paste docstring errors~~ | ~~Misleading docs~~ **RESOLVED** |
 | **Low** | `dist/` in git | Repository bloat |
-| **Low** | Unused `ITEM_TYPE`, dead `name` class attrs | Dead code |
+| ~~**Low**~~ | ~~Unused `ITEM_TYPE`, dead `name` class attrs~~ | ~~Dead code~~ **RESOLVED** |

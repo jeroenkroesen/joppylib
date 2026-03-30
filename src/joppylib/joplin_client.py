@@ -271,7 +271,6 @@ class Item:
 class Note(Item):
     """Interact with notes
     """
-    name: str = 'note'
 
     def get_all_tags(
         self,
@@ -312,9 +311,8 @@ class Note(Item):
 
 
 class Tag(Item):
-    """Interact with items
+    """Interact with tags
     """
-    name: str = 'tag'
 
     def add_to_note(
         self, 
