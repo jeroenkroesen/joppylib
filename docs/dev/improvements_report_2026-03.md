@@ -20,9 +20,11 @@ params = f'?query={query}'
 
 ## 2. Bugs & Correctness Issues
 
-### Copy-paste docstring errors
-- `delete()` docstring says "Get an entity instance by ID" (`api_client.py:385`, `joplin_client.py:246`).
-- `update()` docstring says "data for the object to create" (`api_client.py:359`, `joplin_client.py:221`).
+### ~~Copy-paste docstring errors~~ RESOLVED
+~~- `delete()` docstring says "Get an entity instance by ID" (`api_client.py:385`, `joplin_client.py:246`).~~
+~~- `update()` docstring says "data for the object to create" (`api_client.py:359`, `joplin_client.py:221`).~~
+
+**Fixed:** Corrected `delete()` docstrings to say "Delete an entity instance by ID" and `update()` parameter descriptions to say "data for the object to update" in both `api_client.py` and `joplin_client.py`.
 
 ### ~~`check_connection` ignores non-200 responses (`connection.py:30-33`)~~ RESOLVED
 ```python
@@ -138,6 +140,6 @@ No GitHub Actions, no linting, no type checking configured. The `py.typed` marke
 | ~~**Medium**~~ | ~~Inconsistent return types (Response vs Dict)~~ | ~~Confusing API for consumers~~ **ACCEPTED (by design)** |
 | **Low** | No shared client / consider httpx migration | No connection reuse; httpx would also enable future async support |
 | ~~**Medium**~~ | ~~`check_connection` ignores status codes~~ | ~~False positives~~ **RESOLVED** |
-| **Low** | Copy-paste docstring errors | Misleading docs |
+| ~~**Low**~~ | ~~Copy-paste docstring errors~~ | ~~Misleading docs~~ **RESOLVED** |
 | **Low** | `dist/` in git | Repository bloat |
 | **Low** | Unused `ITEM_TYPE`, dead `name` class attrs | Dead code |

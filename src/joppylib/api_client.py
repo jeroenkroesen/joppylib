@@ -353,7 +353,7 @@ class Item:
         id: str
             The ID of the item to update
         data : Dict[str, Any]
-            The data for the object to create.
+            The data for the object to update.
 
         Returns
         -------
@@ -364,7 +364,7 @@ class Item:
         Raises
         ------
         ValueError
-            If data is a dict and a required field is not found among 
+            If data is a dict and a required field is not found among
             its keys.
         """
         params = f'?token={api_key}' # Setup request parameters
@@ -373,13 +373,13 @@ class Item:
 
 
     def delete(
-        self, 
-        api_key: str, 
-        settings: Settings, 
+        self,
+        api_key: str,
+        settings: Settings,
         id: str,
         trash: Optional[bool] = True
     ) -> requests.Response:
-        """Get an entity instance by ID
+        """Delete an entity instance by ID
 
         Parameters
         ----------
@@ -388,7 +388,7 @@ class Item:
         settings : Settings
             A settings object from config.Settings
         id : str
-            The ID of the item to get
+            The ID of the item to delete
         trash : bool (default: True)
             If True, move the note to trash. If false, permanently 
             delete it.

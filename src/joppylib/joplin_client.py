@@ -218,7 +218,7 @@ class Item:
         id: str
             ID of the item to update
         data : Dict[str, Any]
-            The data for the object to create.
+            The data for the object to update.
 
         Returns
         -------
@@ -239,16 +239,16 @@ class Item:
     
     
     def delete(
-        self,  
+        self,
         id: str,
         trash: Optional[bool] = True
     ) -> requests.Response:
-        """Get an entity instance by ID
+        """Delete an entity instance by ID
 
         Parameters
         ----------
         id : str
-            The ID of the item to get
+            The ID of the item to delete
         trash : bool (default: True)
             If True, move the note to trash. If false, permanently 
             delete it.
