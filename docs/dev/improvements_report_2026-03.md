@@ -85,8 +85,10 @@ If page 3 of 5 fails, the entire operation fails and all data (including success
 
 ## 4. Design Issues
 
-### Pagination loop duplicated 3 times
-The same ~20-line pagination pattern is copy-pasted in `search()` (lines 131-157), `get_multi()` (lines 230-256), and `Note.get_all_tags()` (lines 513-539). They differ only in the initial URL. This has already caused bugs historically (per commits "Fixed: reponse indexes" and "Fixed: added req_index to fix indexing").
+### ~~Pagination loop duplicated 3 times~~ RESOLVED
+~~The same ~20-line pagination pattern is copy-pasted in `search()` (lines 131-157), `get_multi()` (lines 230-256), and `Note.get_all_tags()` (lines 513-539). They differ only in the initial URL. This has already caused bugs historically (per commits "Fixed: reponse indexes" and "Fixed: added req_index to fix indexing").~~
+
+**Fixed:** Extracted a shared `_paginate()` method on `Item`. All three callers now delegate to it. Also migrated `get_multi()` and `get_all_tags()` from string interpolation to `params=` dict.
 
 ### The high-level layer is mostly boilerplate
 Every method in `joplin_client.Item` is a pass-through that prepends `self._api_key` and `self.settings`. ~270 lines exist to hide two parameters. A `requests.Session`-style approach, `functools.partial`, or `__getattr__` delegation could achieve the same in a fraction of the code.
@@ -130,7 +132,7 @@ No GitHub Actions, no linting, no type checking configured. The `py.typed` marke
 | ~~**High**~~ | ~~Auth polling: no timeout, no delay~~ | ~~Infinite loop, pegs CPU, makes Joplin sluggish~~ **RESOLVED** |
 | ~~**High**~~ | ~~URL query not encoded~~ | ~~Searches with special characters break silently~~ **RESOLVED** |
 | ~~**High**~~ | ~~No tests~~ | ~~Every change risks regressions (proven by history)~~ **RESOLVED** |
-| **Medium** | Pagination loop duplicated 3x | Already caused bugs; will again |
+| ~~**Medium**~~ | ~~Pagination loop duplicated 3x~~ | ~~Already caused bugs; will again~~ **RESOLVED** |
 | **Medium** | Inconsistent return types (Response vs Dict) | Confusing API for consumers |
 | **Low** | No shared client / consider httpx migration | No connection reuse; httpx would also enable future async support |
 | ~~**Medium**~~ | ~~`check_connection` ignores status codes~~ | ~~False positives~~ **RESOLVED** |
