@@ -7,14 +7,14 @@
 
 ## 1. Input Sanitization
 
-### No input sanitization on `query` in `search()` — Correctness bug
-`api_client.py:107` interpolates the query directly into the URL string:
+### ~~No input sanitization on `query` in `search()` — Correctness bug~~ RESOLVED
+~~`api_client.py:107` interpolates the query directly into the URL string:~~
 ```python
 params = f'?query={query}'
 ```
-A query containing `&`, `=`, `#`, `+`, or spaces will break the URL or inject additional parameters. For example, searching for `C++` results in Joplin receiving `C  ` (plus decoded as space), and searching for `foo&limit=1` would override the pagination limit.
+~~A query containing `&`, `=`, `#`, `+`, or spaces will break the URL or inject additional parameters. For example, searching for `C++` results in Joplin receiving `C  ` (plus decoded as space), and searching for `foo&limit=1` would override the pagination limit.~~
 
-**Recommendation:** Use the `params` dict parameter of `requests.get()` instead of string concatenation. This handles URL encoding automatically and is the idiomatic Python approach. Joplin's server (Node.js `url.parse` with `querystring`) correctly decodes percent-encoded values.
+**Fixed:** `search()` now uses a `params` dict passed to `requests.get()`, which handles URL encoding automatically. Verified end-to-end against a live Joplin instance with `C++`, `C#`, `foo&bar`, and `key=value` queries.
 
 ---
 
@@ -126,7 +126,7 @@ No GitHub Actions, no linting, no type checking configured. The `py.typed` marke
 |----------|-------|----------------|
 | ~~**High**~~ | ~~No request timeouts~~ | ~~Hangs if Joplin freezes~~ **RESOLVED** |
 | ~~**High**~~ | ~~Auth polling: no timeout, no delay~~ | ~~Infinite loop, pegs CPU, makes Joplin sluggish~~ **RESOLVED** |
-| **High** | URL query not encoded | Searches with special characters break silently |
+| ~~**High**~~ | ~~URL query not encoded~~ | ~~Searches with special characters break silently~~ **RESOLVED** |
 | ~~**High**~~ | ~~No tests~~ | ~~Every change risks regressions (proven by history)~~ **RESOLVED** |
 | **Medium** | Pagination loop duplicated 3x | Already caused bugs; will again |
 | **Medium** | Inconsistent return types (Response vs Dict) | Confusing API for consumers |
