@@ -36,11 +36,13 @@ except requests.exceptions.ConnectionError:
 
 **Fixed:** `check_connection` now uses `resp.ok` (True only for 2xx) and catches the broad `RequestException` base class.
 
-### Inconsistent return types across methods
+### ~~Inconsistent return types across methods~~ ACCEPTED (by design)
 - `get()`, `create()`, `update()`, `delete()` return raw `requests.Response`.
 - `search()`, `get_multi()`, `get_all_tags()` return `Dict[str, Any]` with a `success`/`data`/`error` wrapper.
 
-Consumers must handle two completely different response patterns depending on which method they call.
+~~Consumers must handle two completely different response patterns depending on which method they call.~~
+
+**Accepted:** The split maps to a real architectural difference — single-request methods return the raw Response (full access to status, headers, body), while paginated methods aggregate multiple responses into a Dict wrapper. Unifying would either lose information (Response direction) or add unnecessary wrapping (Dict direction). Downstream consumer JopBrainLib already handles both patterns. Type hints document the contract per method.
 
 ### `name` class attribute collision in `joplin_client`
 `joplin_client.Note` has class attribute `name: str = 'note'`, but its inherited `__init__` takes `name` as a parameter and overwrites it via `self.name = name`. The class attribute is dead code. Same for `Tag`.
@@ -133,7 +135,7 @@ No GitHub Actions, no linting, no type checking configured. The `py.typed` marke
 | ~~**High**~~ | ~~URL query not encoded~~ | ~~Searches with special characters break silently~~ **RESOLVED** |
 | ~~**High**~~ | ~~No tests~~ | ~~Every change risks regressions (proven by history)~~ **RESOLVED** |
 | ~~**Medium**~~ | ~~Pagination loop duplicated 3x~~ | ~~Already caused bugs; will again~~ **RESOLVED** |
-| **Medium** | Inconsistent return types (Response vs Dict) | Confusing API for consumers |
+| ~~**Medium**~~ | ~~Inconsistent return types (Response vs Dict)~~ | ~~Confusing API for consumers~~ **ACCEPTED (by design)** |
 | **Low** | No shared client / consider httpx migration | No connection reuse; httpx would also enable future async support |
 | ~~**Medium**~~ | ~~`check_connection` ignores status codes~~ | ~~False positives~~ **RESOLVED** |
 | **Low** | Copy-paste docstring errors | Misleading docs |
