@@ -24,7 +24,7 @@ params = f'?query={query}'
 - `delete()` docstring says "Get an entity instance by ID" (`api_client.py:385`, `joplin_client.py:246`).
 - `update()` docstring says "data for the object to create" (`api_client.py:359`, `joplin_client.py:221`).
 
-### `check_connection` ignores non-200 responses (`connection.py:30-33`)
+### ~~`check_connection` ignores non-200 responses (`connection.py:30-33`)~~ RESOLVED
 ```python
 try:
     requests.get(url_ping)
@@ -32,7 +32,9 @@ try:
 except requests.exceptions.ConnectionError:
     return False
 ```
-Any HTTP response (including 500) returns `True`. Only a connection failure returns `False`. A Joplin instance that is up but malfunctioning would be reported as connected.
+~~Any HTTP response (including 500) returns `True`. Only a connection failure returns `False`. A Joplin instance that is up but malfunctioning would be reported as connected.~~
+
+**Fixed:** `check_connection` now uses `resp.ok` (True only for 2xx) and catches the broad `RequestException` base class.
 
 ### Inconsistent return types across methods
 - `get()`, `create()`, `update()`, `delete()` return raw `requests.Response`.
@@ -131,7 +133,7 @@ No GitHub Actions, no linting, no type checking configured. The `py.typed` marke
 | **Medium** | Pagination loop duplicated 3x | Already caused bugs; will again |
 | **Medium** | Inconsistent return types (Response vs Dict) | Confusing API for consumers |
 | **Low** | No shared client / consider httpx migration | No connection reuse; httpx would also enable future async support |
-| **Medium** | `check_connection` ignores status codes | False positives |
+| ~~**Medium**~~ | ~~`check_connection` ignores status codes~~ | ~~False positives~~ **RESOLVED** |
 | **Low** | Copy-paste docstring errors | Misleading docs |
 | **Low** | `dist/` in git | Repository bloat |
 | **Low** | Unused `ITEM_TYPE`, dead `name` class attrs | Dead code |
