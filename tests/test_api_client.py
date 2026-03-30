@@ -193,6 +193,33 @@ class TestSearch:
         # Verify the request included type=tag
         assert "type=tag" in responses.calls[0].request.url
 
+    @responses.activate
+    def test_special_characters_encoded(self, note, settings, api_key, base_url):
+        """Queries with special URL characters should be percent-encoded."""
+        responses.get(
+            f"{base_url}/search",
+            json=make_paginated_response([], has_more=False),
+        )
+
+        note.search(api_key, settings, "C++ recipe")
+        url = responses.calls[0].request.url
+        # + and space must be encoded, not passed raw
+        assert "C%2B%2B" in url or "C%2b%2b" in url
+        assert "recipe" in url
+        assert "C++" not in url
+
+    @responses.activate
+    def test_hash_in_query_not_truncated(self, note, settings, api_key, base_url):
+        """A # in the query must be encoded, not treated as URL fragment."""
+        responses.get(
+            f"{base_url}/search",
+            json=make_paginated_response([], has_more=False),
+        )
+
+        note.search(api_key, settings, "C# tutorial")
+        url = responses.calls[0].request.url
+        assert "C%23" in url or "C%23" in url.lower()
+
     def test_invalid_order_by(self, note, settings, api_key):
         with pytest.raises(ValueError, match="not a valid field"):
             note.search(api_key, settings, "q", order_by="nonexistent")

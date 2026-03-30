@@ -104,29 +104,27 @@ class Item:
         """
         # Setup params
         ## Fixed params
-        params = f'?query={query}'
-        # Default assumes we're searching notes. If not, the item type must 
+        params = {'query': query, 'token': api_key, 'limit': settings.pagesize}
+        # Default assumes we're searching notes. If not, the item type must
         #  be added to the parameters
         if self.name != 'note':
-            params += f'&type={self.name}'
-        params += f'&token={api_key}&limit={settings.pagesize}'
+            params['type'] = self.name
         ## Optional params
         if fields:
             # validate fields in list and turn into comma-separated string
-            fieldnames = self.fields_to_params(fields)
-            params += f'&fields={fieldnames}'
+            params['fields'] = self.fields_to_params(fields)
         if order_by:
             if order_by not in self.fields:
                 msg = f'{order_by} is not a valid field to order by'
                 raise ValueError(msg)
-            params += f'&order_by={order_by}'
+            params['order_by'] = order_by
         if order_dir:
             if order_dir not in ['ASC', 'DESC']:
                 msg = f'{order_dir} is not valid. Use ASC or DESC'
                 raise ValueError(msg)
-            params += f'&order_dir={order_dir}'
-        # Base url: url without pagination
-        base_url = f'{settings.base_url}/{settings.search_route}{params}'
+            params['order_dir'] = order_dir
+        # Base url: url without query parameters
+        base_url = f'{settings.base_url}/{settings.search_route}'
         # Setup datastructure for return to caller
         final_result = {} # dict to return to caller
         final_result['success'] = True # Assume success until encounter problem
@@ -135,16 +133,16 @@ class Item:
         req_nr = 1 # Request nr
         req_index = 0
         has_more = True # Make sure request is performed at least once
-        url = f'{base_url}&page={req_nr}' # Add pagination to url
+        params['page'] = req_nr # Add pagination to params
         while has_more: # Loop until pagination completes
-            result_responses.append(requests.get(url, timeout=(3, 10))) # Perform request
+            result_responses.append(requests.get(base_url, params=params, timeout=(3, 10))) # Perform request
             if result_responses[req_index].status_code == 200: # Success: get data
                 resp_data = result_responses[req_index].json() # Extract data
                 result_data.extend(resp_data['items']) # Add to total data to return
                 has_more = resp_data['has_more'] # Check if more data exists
                 req_nr += 1 # Increase request counter
                 req_index += 1
-                url = f'{base_url}&page={req_nr}' # Update URL for next page
+                params['page'] = req_nr # Update page for next request
             else:
                 final_result['success'] = False
                 msg = f'Request nr {req_nr} failed with status code: {result_responses[req_index].status_code}'

@@ -89,8 +89,10 @@ The same ~20-line pagination pattern is copy-pasted in `search()` (lines 131-157
 ### The high-level layer is mostly boilerplate
 Every method in `joplin_client.Item` is a pass-through that prepends `self._api_key` and `self.settings`. ~270 lines exist to hide two parameters. A `requests.Session`-style approach, `functools.partial`, or `__getattr__` delegation could achieve the same in a fraction of the code.
 
-### No `requests.Session` usage
-Every API call opens a new TCP connection. A `requests.Session` would provide connection reuse (faster for paginated calls that make many sequential requests), and a single place to configure timeouts and auth.
+### No connection reuse or shared client instance
+Every API call opens a new TCP connection. There is no shared client instance for connection reuse, central timeout config, or auth handling.
+
+**Recommendation:** Migrate from `requests` to `httpx`. The `httpx.Client` (sync) provides connection pooling, base URL support, and shared config out of the box. Additionally, `httpx.AsyncClient` offers an almost identical async API, enabling a future async interface without a library swap. This is low priority — the library targets localhost so the performance impact is minimal — but it removes a design issue and opens the door for async support.
 
 ### `create()` accepts `Dict | str` but `str` bypasses validation (`api_client.py:331-338`)
 When `data` is a string, required field validation is skipped entirely. The user gets a raw HTTP error with no library-level context if it fails.
@@ -105,8 +107,10 @@ Used as a parameter name throughout both layers. Convention is `item_id` or `id_
 
 ## 5. Testing & Quality
 
-### Zero tests — IN PROGRESS
-This is the single biggest risk. The git history shows multiple pagination and indexing bugs that were caught manually. The triplicated pagination loop is especially prone to regressions.
+### ~~Zero tests~~ RESOLVED
+~~This is the single biggest risk. The git history shows multiple pagination and indexing bugs that were caught manually. The triplicated pagination loop is especially prone to regressions.~~
+
+**Fixed:** 52 tests added across all modules (`test_config.py`, `test_connection.py`, `test_api_client.py`, `test_joplin_client.py`) using `pytest` and `responses` for HTTP mocking. Covers CRUD operations, pagination, auth flows, validation, and delegation.
 
 ### No CI/CD pipeline
 No GitHub Actions, no linting, no type checking configured. The `py.typed` marker exists but `mypy`/`pyright` is not configured to run.
@@ -123,10 +127,10 @@ No GitHub Actions, no linting, no type checking configured. The `py.typed` marke
 | ~~**High**~~ | ~~No request timeouts~~ | ~~Hangs if Joplin freezes~~ **RESOLVED** |
 | ~~**High**~~ | ~~Auth polling: no timeout, no delay~~ | ~~Infinite loop, pegs CPU, makes Joplin sluggish~~ **RESOLVED** |
 | **High** | URL query not encoded | Searches with special characters break silently |
-| **High** | No tests | Every change risks regressions (proven by history) — **IN PROGRESS** |
+| ~~**High**~~ | ~~No tests~~ | ~~Every change risks regressions (proven by history)~~ **RESOLVED** |
 | **Medium** | Pagination loop duplicated 3x | Already caused bugs; will again |
 | **Medium** | Inconsistent return types (Response vs Dict) | Confusing API for consumers |
-| **Medium** | No `requests.Session` | Missed connection reuse, no central timeout config |
+| **Low** | No shared client / consider httpx migration | No connection reuse; httpx would also enable future async support |
 | **Medium** | `check_connection` ignores status codes | False positives |
 | **Low** | Copy-paste docstring errors | Misleading docs |
 | **Low** | `dist/` in git | Repository bloat |
