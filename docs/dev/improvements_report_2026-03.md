@@ -142,8 +142,8 @@ No GitHub Actions, no linting, no type checking configured. The `py.typed` marke
 | ~~**High**~~ | ~~No tests~~ | ~~Every change risks regressions (proven by history)~~ **RESOLVED** |
 | ~~**Medium**~~ | ~~Pagination loop duplicated 3x~~ | ~~Already caused bugs; will again~~ **RESOLVED** |
 | ~~**Medium**~~ | ~~Inconsistent return types (Response vs Dict)~~ | ~~Confusing API for consumers~~ **ACCEPTED (by design)** |
-| **Low** | No shared client / consider httpx migration | No connection reuse; httpx would also enable future async support |
+| ~~**Low**~~ | ~~No shared client / consider httpx migration~~ | ~~No connection reuse; httpx would also enable future async support~~ **ACCEPTED (deferred)** |
 | ~~**Medium**~~ | ~~`check_connection` ignores status codes~~ | ~~False positives~~ **RESOLVED** |
 | ~~**Low**~~ | ~~Copy-paste docstring errors~~ | ~~Misleading docs~~ **RESOLVED** |
-| **Low** | `dist/` in git | Repository bloat |
+| ~~**Low**~~ | ~~`dist/` in git~~ | ~~Repository bloat~~ **ACCEPTED (deferred)** |
 | ~~**Low**~~ | ~~Unused `ITEM_TYPE`, dead `name` class attrs~~ | ~~Dead code~~ **RESOLVED** |
