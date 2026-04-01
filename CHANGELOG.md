@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+## [0.1.0a12] - 2026-04-01
+
+### Added
+- Runtime `__version__` attribute derived from package metadata.
+- CHANGELOG.md following Keep a Changelog format.
+- PyPI metadata: license, keywords, classifiers, URLS.
+
 ## [0.1.0a11] - 2026-03-31
 
 Alpha development phase, consolidated from releases 0.1.0a1 through 0.1.0a11.
